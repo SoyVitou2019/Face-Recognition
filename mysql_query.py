@@ -19,14 +19,14 @@ class MysqlQuery:
 
     def write_data_into_attendance(self, data):
         cursor = self.conn.cursor()
-        insert_query = "INSERT INTO attendance (user_id, check_status) VALUES (%s, %s)"
+        insert_query = "INSERT INTO attendances (employee_id, check_status) VALUES (%s, %s)"
         cursor.execute(insert_query, data)
         self.conn.commit()
         print("successfully")
 
     def get_user_id_by_username(self, username):
         cursor = self.conn.cursor()
-        query = "SELECT user_id FROM users WHERE username = %s"
+        query = "SELECT id FROM employees WHERE CONCAT(LOWER(first_name), ' ', LOWER(last_name)) = %s"
         cursor.execute(query, (username,))
         user_id = cursor.fetchone()
         if user_id:
@@ -37,7 +37,7 @@ class MysqlQuery:
     def check_in_or_out(self, user_id, period):
         current_date = datetime.datetime.now().date().strftime('%Y-%m-%d')
         cursor = self.conn.cursor()
-        query = "SELECT check_status FROM attendance WHERE user_id = %s AND DATE(time_stamp) = %s AND time(time_stamp) BETWEEN %s AND %s ORDER BY time_stamp DESC LIMIT 1"
+        query = "SELECT check_status FROM attendances WHERE employee_id = %s AND DATE(time_stamp) = %s AND time(time_stamp) BETWEEN %s AND %s ORDER BY time_stamp DESC LIMIT 1"
         cursor.execute(query, (user_id, current_date, period[0], period[1]))
         check_status = cursor.fetchone()
         if check_status:

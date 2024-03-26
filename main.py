@@ -1,5 +1,3 @@
-import multiprocessing
-import time
 import tkinter as tk
 from PIL import Image, ImageTk
 import cv2
@@ -10,17 +8,20 @@ import os
 import numpy as np
 import threading
 from mysql_query import MysqlQuery
+from get_faces_from_camera_tkinter import Face_Register
+
 
 class VideoCaptureApp:
     def __init__(self, root, window_width, window_height, video_width, video_height):
         self.root = root
         self.root.title("OpenCV Video Capture with Tkinter")
-        self.mysql_query = MysqlQuery(host="localhost", user="root", password="", database="attendance_db")
-        self.video_capture = cv2.VideoCapture(0)  # Open default camera
-
+        self.camera = 0
+        self.mysql_query = MysqlQuery(host="47.129.17.36", user="vitou_wct", password="vitou2357.!", database="attendance_test1")
+        self.video_capture = cv2.VideoCapture(self.camera)  # Open default camera
         self.check_in = None
         self.name = None
         self.start_time_4update_profile = 0
+        # self.register = Face_Register()
         # ML variables
         self.detector = dlib.get_frontal_face_detector()
         self.predictor = dlib.shape_predictor('data/data_dlib/shape_predictor_68_face_landmarks.dat')
@@ -271,13 +272,19 @@ class VideoCaptureApp:
             self.video_frame.config(image=frame)
             self.video_frame.image = frame  # Keep a reference to prevent garbage collection
             
-            self.draw_img(780, 40)  # Draw the image
-            self.draw_profile_text(self.name, 25, "None", "Software Engineer", 780, 250)  # Draw the profile text
+            self.draw_img(780, 100)  # Draw the image
+            self.draw_profile_text(self.name, 780, 310)  # Draw the profile text
         self.root.after(10, self.update_video)  # Update every 10 milliseconds
     
     def draw_btn(self, pos_x, pos_y, width, height, text):
         # Create a button widget
         btn = tk.Button(self.root, text=text, width=width, height=height, command=self.button_click)
+        # Place the button at desired coordinates
+        btn.place(x=pos_x, y=pos_y)
+    
+    def draw_register_btn(self,  pos_x, pos_y, width, height, text):
+        # Create a button widget
+        btn = tk.Button(self.root, text=text, width=width, height=height, command=self.button_register_click)
         # Place the button at desired coordinates
         btn.place(x=pos_x, y=pos_y)
 
@@ -286,9 +293,15 @@ class VideoCaptureApp:
         position_label.place(x = 100, y = 20)
         username = str(self.name).replace("-", " ")
         user_id = self.mysql_query.get_user_id_by_username(username)
+        print(user_id)
+        check_in_or_out = self.mysql_query.check_in_or_out(user_id=12, period=['8:00:00', '16:00:00'])
         self.mysql_query.write_data_into_attendance((user_id, False))
-        print(self.mysql_query.check_in_or_out(user_id=12, period=['8:00:00', '16:00:00']))
+        # print(self.mysql_query.check_in_or_out(user_id=12, period=['8:00:00', '16:00:00']))
         print(self.name)
+    
+    def button_register_click(self):
+        print("worked")
+        
     
     def draw_img(self, pos_x, pos_y):
         image_path = "./images/fake_profile.png"
@@ -319,20 +332,14 @@ class VideoCaptureApp:
         self.img_label.image = img_with_frame_tk  # Keep a reference to prevent garbage collection
         self.img_label.place(x=pos_x, y=pos_y)
 
-    def draw_profile_text(self, name, age, gender, position, pos_x, pos_y):
+    def draw_profile_text(self, name, pos_x, pos_y):
         # Create labels for each piece of profile text
         if self.name:
             name = self.name
-        name_label = tk.Label(self.root, text=f"Name: {name}")
-        age_label = tk.Label(self.root, text=f"Age: {age}")
-        gender_label = tk.Label(self.root, text=f"Gender: {gender}")
-        position_label = tk.Label(self.root, text=f"Position: {position}")
+        name_label = tk.Label(self.root, text=f"Name: {name}", font=16)
 
         # Place the labels below the image
         name_label.place(x=pos_x, y=pos_y)
-        age_label.place(x=pos_x + 100, y=pos_y)
-        gender_label.place(x=pos_x, y=pos_y + 20)
-        position_label.place(x=pos_x + 100, y=pos_y + 20)
 
 def main():
     window_width = 1080  # Width of the Tkinter window
@@ -343,7 +350,8 @@ def main():
     root = tk.Tk()
     app = VideoCaptureApp(root, window_width, window_height, video_width, video_height)
     app.draw_btn(800, 430, 15, 3, "Submit")  # Draw the button
-    
+    app.draw_register_btn(900, 20, 15, 3, "Register")
+    print("Hello")
     root.geometry(f"{window_width}x{window_height}")  # Set the window size
     root.mainloop()
 
